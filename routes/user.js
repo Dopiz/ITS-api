@@ -1,8 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var path = require('path');
-var issue = require('../modules/user');
+var user = require('../modules/user');
 
-router.get('/getUsers', issue.getUsers);
+router.get('/getUsers', user.getUsers);
 
 module.exports = router;

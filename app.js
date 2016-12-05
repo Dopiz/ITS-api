@@ -10,6 +10,7 @@ var PORT = 3000;
 /* require Router setting */
 var issue = require('./routes/issue');
 var user = require('./routes/user');
+var project = require('./routes/project');
 
 var server = http.createServer(app).listen(PORT, function(){
 	console.log('HTTP Server listening on %s', PORT);
@@ -36,3 +37,4 @@ app.use(function (req, res, next) {
 
 app.use('/issue', issue);
 app.use('/user', user);
+app.use('/project', project);

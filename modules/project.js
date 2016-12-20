@@ -1,9 +1,77 @@
 /* use database module */
 var database = require('./database');
+var url = require('url');
 
 function getProjects(req, res){
+    var tmp = url.parse(req.url, true).query;
+    if(tmp.id == null || tmp.id == ''){
+        var queryStatement = 'Select * From project ' ;
+        database.query(queryStatement, function(error, results) {
+            if (error) {
+                res.status(500).send({
+                    status_messages: 'Internal error',
+                    status_code: 500
+                });
+                console.log('Error: getProjects :' + error);
 
-    var queryStatement = 'Select * From project' ;
+            } else if (results.length > 0) {
+
+                res.status(200).send({
+                    status_messages: 'getProjects success.',
+                    data : results
+                });
+            }
+            else {
+                res.status(404).send({
+                    status_messages: 'getProjects Not found.',
+                    status_code: 404
+                })
+            }
+        });
+    }
+    else{
+        getProjectsById(req,res, tmp.id);
+    }
+}
+
+function getProjectsById(req, res, id){
+    var queryStatement = 'Select project From user WHERE id=?' ;
+
+    database.query(queryStatement, id, function(error, results) {
+
+        if (error) {
+            res.status(500).send({
+                status_messages: 'Internal error',
+                status_code: 500
+            });
+            console.log('Error: getUserProjects :' + error);
+
+        } else if (results.length > 0) {
+            /*res.status(200).send({
+                status_messages: '**',
+                status_code: 200,
+                data : results
+            });*/
+            getUserProjectData(req, res, results[0].project);
+        }
+        else {
+            res.status(404).send({
+                status_messages: 'getUserProjects Not found.',
+                status_code: 404
+            })
+        }
+    });
+}
+
+function getUserProjectData(req, res, project_str){
+
+    var project = project_str.split(" ");
+    var queryStatement = 'Select id, project_name From project WHERE ' ;
+    for (var i = project.length - 2; i >= 0; i--) {
+        queryStatement += 'id=' + project[i];
+        if(i!=0)
+            queryStatement+=' OR '
+    }
 
     database.query(queryStatement, function(error, results) {
 
@@ -12,18 +80,17 @@ function getProjects(req, res){
                 status_messages: 'Internal error',
                 status_code: 500
             });
-            console.log('Error: getProjects :' + error);
+            console.log('Error: getUserProjectData :' + error);
 
         } else if (results.length > 0) {
-
             res.status(200).send({
-                status_messages: 'getProjects success.',
-                data : results
-            });
+                status_messages: 'getUserProject success.',
+                status_code: results
+            })
         }
         else {
             res.status(404).send({
-                status_messages: 'getProjects Not found.',
+                status_messages: 'getUserProjectData Not found.',
                 status_code: 404
             })
         }
@@ -31,9 +98,33 @@ function getProjects(req, res){
 }
 
 function addProject(req, res){
-    var queryStatement = 'INSERT INTO project (id, project_name) VALUES (NULL, \'' + req.body.project_name + '\');' ;
+    var data_set = {
+        project_name : req.body.project_name,
+        project_description : req.body.project_description
+    };
 
-    database.query(queryStatement, function(error, results) {
+    var msg='';
+    if((data_set.project_name==null || data_set.project_name=='') && (data_set.project_description==null || data_set.project_description=='')){
+        msg += 'Please enter a project name and description';
+    }
+    else if(data_set.project_name == null || data_set.project_name == ''){
+        msg += 'Please enter a project name';
+    } 
+    else if(data_set.project_description == null || data_set.project_description == ''){
+        msg += 'Please enter a description';
+    }
+    if(msg != ''){
+        res.send({
+            status_messages: msg,
+            status_code: 400
+        });
+        return;
+    }
+
+    
+    var queryStatement = 'INSERT INTO project SET ? ';
+
+    database.query(queryStatement, data_set, function(error, results) {
 
         if (error) {
             res.status(500).send({
@@ -45,17 +136,39 @@ function addProject(req, res){
         } 
         else {
             res.status(200).send({
-                status_messages: 'addProject success.',
-                data : results
+                status_messages: 'addProject success.'
             });
         }
     });
 }
 
 function updateProject(req, res){
-    var queryStatement = 'UPDATE project SET project_name=? WHERE id=?;' ;
+    var data_set = {
+        project_name : req.body.project_name,
+        project_description : req.body.project_description
+    };
 
-    database.query(queryStatement, [req.body.project_name, req.body.id], function(error, results) {
+    var msg='';
+    if((data_set.project_name==null || data_set.project_name=='') && (data_set.project_description==null || data_set.project_description=='')){
+        msg += 'Please enter a project name and description';
+    }
+    else if(data_set.project_name == null || data_set.project_name == ''){
+        msg += 'Please enter a project name';
+    } 
+    else if(data_set.project_description == null || data_set.project_description == ''){
+        msg += 'Please enter a description';
+    }
+    if(msg != ''){
+        res.send({
+            status_messages: msg,
+            status_code: 400
+        });
+        return;
+    }
+    
+    var queryStatement = 'UPDATE project SET ? WHERE id=?;' ;
+
+    database.query(queryStatement, [data_set, req.body.id], function(error, results) {
 
         if (error) {
             res.status(500).send({
@@ -67,12 +180,12 @@ function updateProject(req, res){
         } 
         else {
             res.status(200).send({
-                status_messages: 'updateProject success.',
-                data : results
+                status_messages: 'updateProject success.'
             });
         }
     });
 }
+
 
 module.exports.getProjects = getProjects;
 module.exports.addProject = addProject;

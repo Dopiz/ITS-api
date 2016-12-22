@@ -3,17 +3,24 @@ var database = require('./database');
 
 function getUsers(req, res){
 
-    console.log(req.query.title);
-    // if(req.query.title == null){
-    //     res.status(400).send({
-    //         status_messages: 'Please select a title.',
-    //         status_code: 400
-    //     });
-    //     return ;
-    // }
-
-    var queryStatement = (req.query.title == 'all') ?
-      ('Select * From user Where title!=\'Admin\'') : ("Select * From user Where title='" + req.query.title + "'");
+    var queryStatement ;
+    /*only projectId*/
+    if(!req.query.title && req.query.projectId){
+        queryStatement = 'Select * From user Where title!=\'Admin\'' ;
+    }
+    /*only title*/
+    else if(req.query.title && !req.query.projectId){
+        queryStatement = (req.query.title == 'all') ?
+            ('Select * From user Where title!=\'Admin\'') : ("Select * From user Where title='" + req.query.title + "'");
+    }
+    /*error*/
+    else {
+        res.status(400).send({
+            status_messages: "Parameter without 'title' or 'projectId'",
+            status_code: 400
+        });
+        return ;
+    }
 
     database.query(queryStatement, function(error, results) {
 
@@ -26,24 +33,44 @@ function getUsers(req, res){
 
         } else if (results.length > 0 || results.length == 0) {
 
+            var tempResult = [];
+            /*get user by projectId*/
+            if(!req.query.title && req.query.projectId){
 
-            for(var i = 0 ; i < results.length ; i++){
+                for(var i = 0 ; i < results.length ; i++){
+                    var project = JSON.parse(results[i].project);
 
-                var project_list = "";
-                var jsonObject = JSON.parse(results[i].project);
+                    for(var j = 0 ; j < project.length ; j++){
+                        if(project[j].value == req.query.projectId){
+                            tempResult.push(results[i]);
+                            break;
+                        }
+                    }
+                }
+            }
+            /*get user by title*/
+            else if(req.query.title && !req.query.projectId){
 
-                for(var j = 0 ; j < jsonObject.length ; j++){
-                    project_list += jsonObject[j].label ;
-                    if(j != jsonObject.length-1)
-                        project_list += ", ";
+                for(var i = 0 ; i < results.length ; i++){
+
+                    var project_list = "";
+                    var jsonObject = JSON.parse(results[i].project);
+
+                    for(var j = 0 ; j < jsonObject.length ; j++){
+                        project_list += jsonObject[j].label ;
+                        if(j != jsonObject.length-1)
+                            project_list += ", ";
+                    }
+
+                    results[i].project_list = project_list ;
                 }
 
-                results[i].project_list = project_list ;
+                tempResult = results ;
             }
 
             res.status(200).send({
                 status_messages: 'getUsers success.',
-                data : results
+                data : tempResult
             });
         }
         else {

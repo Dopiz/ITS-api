@@ -1,5 +1,6 @@
 /* use database module */
 var database = require('./database');
+var multer = require('./multerUtil');
 var url = require('url');
 
 function getIssues(req, res){
@@ -104,6 +105,8 @@ function addIssue(req, res){
         return;
     }
 
+    uploadImage(req,res);
+
     var queryStatement = 'INSERT INTO issue SET ?';
 
     database.query(queryStatement, data_set, function(error, results) {
@@ -122,6 +125,15 @@ function addIssue(req, res){
             });
         }
     });
+}
+
+function uploadImage(req, res){
+    var upload = multer.single(req.file);
+    upload(req, res, function(err){
+        if(err){
+            return console.log(err);
+        }
+    })
 }
 
 module.exports.getIssues = getIssues;

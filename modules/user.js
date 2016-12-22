@@ -2,13 +2,15 @@
 var database = require('./database');
 
 function getUsers(req, res){
-    if(req.query.title == null){
-        res.status(400).send({
-            status_messages: 'Please select a title.',
-            status_code: 400
-        });
-        return ;
-    }
+
+    console.log(req.query.title);
+    // if(req.query.title == null){
+    //     res.status(400).send({
+    //         status_messages: 'Please select a title.',
+    //         status_code: 400
+    //     });
+    //     return ;
+    // }
 
     var queryStatement = (req.query.title == 'all') ?
       ('Select * From user Where title!=\'Admin\'') : ("Select * From user Where title='" + req.query.title + "'");

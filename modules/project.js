@@ -109,7 +109,7 @@ function addProject(req, res){
     }
     else if(data_set.project_name == null || data_set.project_name == ''){
         msg += 'Please enter a project name';
-    } 
+    }
     else if(data_set.project_description == null || data_set.project_description == ''){
         msg += 'Please enter a description';
     }
@@ -121,7 +121,7 @@ function addProject(req, res){
         return;
     }
 
-    
+
     var queryStatement = 'INSERT INTO project SET ? ';
 
     database.query(queryStatement, data_set, function(error, results) {
@@ -133,7 +133,7 @@ function addProject(req, res){
             });
             console.log('Error: addProject :' + error);
 
-        } 
+        }
         else {
             res.status(200).send({
                 status_messages: 'addProject success.'
@@ -154,7 +154,7 @@ function updateProject(req, res){
     }
     else if(data_set.project_name == null || data_set.project_name == ''){
         msg += 'Please enter a project name';
-    } 
+    }
     else if(data_set.project_description == null || data_set.project_description == ''){
         msg += 'Please enter a description';
     }
@@ -165,7 +165,7 @@ function updateProject(req, res){
         });
         return;
     }
-    
+
     var queryStatement = 'UPDATE project SET ? WHERE id=?;' ;
 
     database.query(queryStatement, [data_set, req.body.id], function(error, results) {
@@ -177,7 +177,7 @@ function updateProject(req, res){
             });
             console.log('Error: updateProject :' + error);
 
-        } 
+        }
         else {
             res.status(200).send({
                 status_messages: 'updateProject success.'

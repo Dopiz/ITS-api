@@ -81,7 +81,7 @@ function addUser(req, res){
         return;
     }
 
-    
+
 
 
 
@@ -127,15 +127,9 @@ function isEmail(strEmail) {
     return false;
 }
 
-<<<<<<< HEAD
-function updateUserInfo(req, res){
-    var user_field = ['name', 'phone', 'project', 'password'];
-    var msg = 'Please enter a ';    
-=======
 function updateUser(req, res){
     var user_field = ['name', 'title', 'phone', 'project', 'password'];
     var msg = 'Please enter a ';
->>>>>>> e7da9a4eb0d5554e8cd3d85682fcea813b4c770c
     var index = 0;  //記欄位index
     var count = 0;  //計算缺了幾個
 
@@ -197,7 +191,7 @@ function updateUser(req, res){
 
 function login(req, res){
 
-    var queryStatement = 'Select id, title, name From user WHERE email=? AND password=?' ;
+    var queryStatement = 'Select id, title, name, project From user WHERE email=? AND password=?' ;
 
     database.query(queryStatement, [req.body.email, req.body.password], function(error, results) {
 

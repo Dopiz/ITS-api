@@ -2,6 +2,13 @@
 var database = require('./database');
 
 function getUsers(req, res){
+    if(req.query.title == null){
+        res.status(400).send({
+            status_messages: 'Please select a title.',
+            status_code: 400
+        });
+        return ;
+    }
 
     var queryStatement = (req.query.title == 'all') ?
       ('Select * From user Where title!=\'Admin\'') : ("Select * From user Where title='" + req.query.title + "'");
@@ -57,12 +64,12 @@ function addUser(req, res){
         name : req.body.name,
         title : req.body.title,
         phone : req.body.phone,
-        project : JSON.stringify(req.body.project),
+        project : req.body.project,
         email : req.body.email,
         password : req.body.password
     };
 
-    /*加上name title phone...的防呆*/
+    /*name title phone...的防呆*/
     for(x in data_set){
         if (data_set[x]==null || data_set[x]=='') {
             if(count!=0)
@@ -72,18 +79,13 @@ function addUser(req, res){
         }
         index++;
     }
-
     if(count != 0){ //少欄位
-        res.send({
+        res.status(400).send({
             status_messages: msg,
             status_code: 400
         });
         return;
     }
-
-    
-
-
 
     if(isEmail(data_set['email']) == false){    //判斷email格式
         res.status(400).send({
@@ -92,13 +94,6 @@ function addUser(req, res){
         });
         return;
     }
-
-    var str = '';
-    var tmp = req.body.project;
-    for(x in tmp){
-        str += tmp[x]['value'] + ' ';
-    }
-    data_set['project'] = str;
 
     var queryStatement = 'INSERT INTO user SET ?' ;
 
@@ -127,53 +122,47 @@ function isEmail(strEmail) {
     return false;
 }
 
-<<<<<<< HEAD
-function updateUserInfo(req, res){
-    var user_field = ['name', 'phone', 'project', 'password'];
-    var msg = 'Please enter a ';    
-=======
 function updateUser(req, res){
-    var user_field = ['name', 'title', 'phone', 'project', 'password'];
+    var user_field = ['name', 'phone', 'project', 'password'];
     var msg = 'Please enter a ';
->>>>>>> e7da9a4eb0d5554e8cd3d85682fcea813b4c770c
     var index = 0;  //記欄位index
     var count = 0;  //計算缺了幾個
 
     var data_set = {
         name : req.body.name,
         phone : req.body.phone,
-        project : JSON.stringify(req.body.project),
+        project : req.body.project,
         password : req.body.password
     };
 
-    // for(x in data_set){
-    //     if (data_set[x]==null || data_set[x]=='') {
-    //         if(count!=0)
-    //             msg += ', ';
-    //         msg += user_field[index];
-    //         count++;
-    //     }
-    //     index++;
-    // }
-    //
-    // if(count != 0){
-    //     res.send({
-    //         status_messages: msg,
-    //         status_code: 400
-    //     });
-    //     return;
-    // }
+    for(x in data_set){
+        if (data_set[x]==null || data_set[x]=='') {
+        if(count!=0)
+            msg += ', ';
+            msg += user_field[index];
+                count++;
+        }
+        index++;
+    }
+
+    if(count != 0){
+        res.send({
+            status_messages: msg,
+            status_code: 400
+        });
+        return;
+    }
 
     if(isEmail(req.body.email) == false){
-        res.send({
+        res.status(400).send({
             status_messages: 'Not a valid e-mail address!',
             status_code: 400
         });
         return;
     }
 
-    var queryStatement = 'UPDATE user SET ? WHERE id=?;'
-    database.query(queryStatement, [data_set, req.body.id], function(error, results) {
+    var queryStatement = 'UPDATE user SET ? WHERE email=?;'
+    database.query(queryStatement, [data_set, req.body.email], function(error, results) {
         if (error) {
             res.status(500).send({
                 status_messages: 'Internal error',

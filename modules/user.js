@@ -31,6 +31,7 @@ function getUsers(req, res){
 }
 
 function addUser(req, res){
+    console.log(req.body.project[0].value);
     var user_field = ['name', 'title', 'phone', 'project', 'email', 'password'];
     var msg = 'Please enter a ';    
     var index = 0;  //記欄位index
@@ -40,12 +41,12 @@ function addUser(req, res){
         name : req.body.name,
         title : req.body.title,
         phone : req.body.phone,
-        project : req.body.project,
+        project : JSON.stringify(req.body.project),
         email : req.body.email,
         password : req.body.password
     };
 
-    for(x in data_set){        
+    for(x in data_set){
         if (data_set[x]==null || data_set[x]=='') {
             if(count!=0)
                 msg += ', ';
@@ -55,7 +56,7 @@ function addUser(req, res){
         index++;
     }
 
-    if(count != 0){
+    if(count != 0){ //少欄位
         res.send({
             status_messages: msg,
             status_code: 400
@@ -63,13 +64,20 @@ function addUser(req, res){
         return;
     }
 
-    if(isEmail(data_set['email']) == false){
-        res.send({
+    if(isEmail(data_set['email']) == false){    //判斷email格式
+        res.status(400).send({
             status_messages: 'Not a valid e-mail address!',
             status_code: 400
         });
         return;
     }
+
+    var str = '';
+    var tmp = req.body.project;
+    for(x in tmp){
+        str += tmp[x]['value'] + ' ';
+    }
+    data_set['project'] = str;
 
     var queryStatement = 'INSERT INTO user SET ?' ;
 
@@ -99,14 +107,13 @@ function isEmail(strEmail) {
 }
 
 function updateUserInfo(req, res){
-    var user_field = ['name', 'title', 'phone', 'project', 'password'];
+    var user_field = ['name', 'phone', 'project', 'password'];
     var msg = 'Please enter a ';    
     var index = 0;  //記欄位index
     var count = 0;  //計算缺了幾個
 
     var data_set = {
         name : req.body.name,
-        title : req.body.title,
         phone : req.body.phone,
         project : req.body.project,
         password : req.body.password

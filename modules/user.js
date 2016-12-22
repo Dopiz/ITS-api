@@ -186,7 +186,7 @@ function updateUser(req, res){
 
 function login(req, res){
 
-    var queryStatement = 'Select id, title, name From user WHERE email=? AND password=?' ;
+    var queryStatement = 'Select id, title, name, project From user WHERE email=? AND password=?' ;
 
     database.query(queryStatement, [req.body.email, req.body.password], function(error, results) {
 

@@ -1,111 +1,138 @@
 /* use database module */
 var database = require('./database');
+var moment = require('moment');
 var url = require('url');
 
 function getIssues(req, res){
-    var tmp = url.parse(decodeURIComponent(req.url), true).search;
-    if(tmp == null || tmp == ''){
-        //var queryStatement = 'SELECT *, DATE_FORMAT(create_date, "%Y-%m-%d") AS createDate, DATE_FORMAT(due_date, "%Y-%m-%d") AS dueDate  FROM issue' ;
-        var queryStatement = 'SELECT id, project_id, priority, status, type, owner_id, developer_id, tester_id, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue' ;
 
-        database.query(queryStatement, function(error, results) {
+    var queryStatement = 'SELECT *, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_date From Issue ';
+    if(req.query.status)
+        queryStatement += 'WHERE status=' + req.query.status ;
 
-            if (error) {
-                res.status(500).send({
-                    status_messages: 'Internal error',
-                    status_code: 500
-                });
-                console.log('Error: getIssues :' + error);
-
-            } else if (results.length > 0) {
-
-                res.status(200).send({
-                    status_messages: 'getIssues success.',
-                    data : results
-                });
-            }
-            else {
-                res.status(404).send({
-                    status_messages: 'getIssues Not found.',
-                    status_code: 404
-                })
-            }
-        });
-    }
-    else {
-        tmp = tmp.replace(/&/g, ' AND ');
-        getIssuesByData(req, res, 'Where ' + tmp.substr(1));
-    }
-}
-
-function getIssuesByData(req, res, where){
-    //var queryStatement = 'SELECT *, DATE_FORMAT(create_date, "%Y-%m-%d") AS createDate, DATE_FORMAT(due_date, "%Y-%m-%d") AS dueDate  FROM issue' ;
-    var queryStatement = 'SELECT id, project_name, priority, status, type, owner_id, developer_id, tester_id, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue ' + where ;
     database.query(queryStatement, function(error, results) {
-
         if (error) {
             res.status(500).send({
                 status_messages: 'Internal error',
                 status_code: 500
             });
-            console.log('Error: getIssuesByData :' + error);
+            console.log('Error: getIssues :' + error);
 
         } else if (results.length > 0) {
-
-            res.status(200).send({
-                status_messages: 'getIssuesByData success.',
-                data : results
-            });
+            setProjectName(res, results);
         }
         else {
             res.status(404).send({
-                status_messages: 'getIssuesByData Not found.',
+                status_messages: 'getIssues Not found.',
                 status_code: 404
             })
         }
     });
 }
 
-var issue_field = ['title', 'priority', 'status', 'type', 'owner', 'project id', 'developer', 'tester', 'create date', 'due date'];
+function setProjectName(res, data){
+
+    var queryStatement = 'SELECT * From Project';
+
+    database.query(queryStatement, function(error, results) {
+        if (error) {
+            res.status(500).send({
+                status_messages: 'Internal error',
+                status_code: 500
+            });
+            console.log('Error: setProjectName :' + error);
+
+        } else if (results.length > 0) {
+
+            for(var i = 0 ; i < data.length ; i++){
+                for(var j = 0 ; j < results.length ; j++){
+                    if(data[i].project_id == results[j].id){
+                        data[i].project_name = results[j].project_name
+                        break ;
+                    }
+                }
+            }
+            setUserName(res, data);
+        }
+        else {
+            res.status(404).send({
+                status_messages: 'setProjectName Not found.',
+                status_code: 404
+            })
+        }
+    });
+}
+
+function setUserName(res, data){
+
+    var queryStatement = 'SELECT * From user';
+
+    database.query(queryStatement, function(error, results) {
+        if (error) {
+            res.status(500).send({
+                status_messages: 'Internal error',
+                status_code: 500
+            });
+            console.log('Error: setUserName :' + error);
+
+        } else if (results.length > 0) {
+
+            for(var i = 0 ; i < data.length ; i++){
+                for(var j = 0 ; j < results.length ; j++){
+                    if(data[i].owner_id == results[j].id){
+                        data[i].owner_name = results[j].name
+                        break ;
+                    }
+                }
+            }
+            for(var i = 0 ; i < data.length ; i++){
+                for(var j = 0 ; j < results.length ; j++){
+                    if(data[i].developer_id == results[j].id){
+                        data[i].developer_name = results[j].name
+                        break ;
+                    }
+                }
+            }
+            for(var i = 0 ; i < data.length ; i++){
+                for(var j = 0 ; j < results.length ; j++){
+                    if(data[i].tester_id == results[j].id){
+                        data[i].tester_name = results[j].name
+                        break ;
+                    }
+                }
+            }
+
+            res.status(200).send({
+                status_messages: 'getIssues success.',
+                data : data
+            });
+
+        }
+        else {
+            res.status(404).send({
+                status_messages: 'setUserName Not found.',
+                status_code: 404
+            })
+        }
+    });
+
+}
 
 function addIssue(req, res){
-    var msg = 'Please enter a ';
-    var index = 0;  //記欄位index
-    var count = 0;  //計算缺了幾個
 
     var data_set = {
         title : req.body.title,
         priority : req.body.priority,
-        status : (req.body.status) ? (req.body.status) : ("New"),
+        status : "New",
         type : req.body.type,
         project_id : req.body.project_id,
         owner_id : req.body.owner_id,
         developer_id : req.body.developer_id,
         tester_id : req.body.tester_id,
         description : req.body.description,
-        image : req.body.image,
-        create_date : req.body.create_date,
+        image : (req.body.image) ? (req.body.image) : (null),
+        create_date : moment(dateTime).format("YYYY-MM-DD"),
         due_date : req.body.due_date
     };
-
-    // for(x in data_set){
-    //     if (data_set[x]==null || data_set[x]=='') {
-    //         if(count!=0)
-    //             msg += ', ';
-    //         msg += issue_field[index];
-    //         count++;
-    //     }
-    //     index++;
-    // }
-    //
-    // if(count != 0){
-    //     res.send({
-    //         status_messages: msg,
-    //         status_code: 400
-    //     });
-    //     return;
-    // }
-
 
     var queryStatement = 'INSERT INTO issue SET ?';
 
@@ -127,6 +154,39 @@ function addIssue(req, res){
     });
 }
 
+function updateIsuse(req, res){
 
+    var data_set = {
+        title : req.body.title,
+        priority : req.body.priority,
+        type : req.body.type,
+        project_id : req.body.project_id,
+        developer_id : req.body.developer_id,
+        tester_id : req.body.tester_id,
+        description : req.body.description,
+        image : (req.body.image) ? (req.body.image) : (null),
+        due_date : req.body.due_date
+    };
+
+    var queryStatement = 'UPDATE issue SET ? WHERE id=?;' ;
+
+    database.query(queryStatement, [data_set, req.body.id], function(error, results) {
+
+        if (error) {
+            res.status(500).send({
+                status_messages: 'Internal error',
+                status_code: 500
+            });
+            console.log('Error: updateIssue :' + error);
+
+        }
+        else {
+            res.status(200).send({
+                status_messages: 'updateIssue success.'
+            });
+        }
+    });
+}
 module.exports.getIssues = getIssues;
 module.exports.addIssue = addIssue;
+module.exports.updateIsuse = updateIsuse;

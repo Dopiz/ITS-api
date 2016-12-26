@@ -130,7 +130,7 @@ function addIssue(req, res){
         tester_id : req.body.tester_id,
         description : req.body.description,
         image : (req.body.image) ? (req.body.image) : (null),
-        create_date : moment(dateTime).format("YYYY-MM-DD"),
+        create_date : moment().format("YYYY-MM-DD"),
         due_date : req.body.due_date
     };
 
@@ -146,7 +146,15 @@ function addIssue(req, res){
             console.log('Error: addIssue :' + error);
 
         } else{
-
+            var history = {
+                issue_id : results.insertId,
+                status : "",
+                content : "Edit an issue",
+                comment : "",
+                user_id : req.body.owner_id,
+                user_name : req.body.owner_name,
+            }
+            addHistory(history);
             res.status(200).send({
                 status_messages: 'addIssue success.'
             });
@@ -181,12 +189,141 @@ function updateIsuse(req, res){
 
         }
         else {
+            var history = {
+                issue_id : req.body.id,
+                status : "",
+                content : "Edit an issue",
+                comment : "",
+                user_id : req.body.owner_id,
+                user_name : req.body.owner_name,
+            }
+            addHistory(history);
             res.status(200).send({
                 status_messages: 'updateIssue success.'
             });
         }
     });
 }
+
+function changeStatus(req, res){
+
+    var status ;
+    var content ;
+
+    if(req.body.status == "New"){
+        status = "Development" ;
+        content = "Accept the issue."
+    }
+    else if(req.body.status == "Development"){
+        status = "Testing" ;
+        content = "Complete the development."
+    }
+    else if(req.body.status == "Testing" && req.body.action == "Finish"){
+        status = "Done" ;
+        content = "Complete the test." ;
+    }
+    else if(req.body.status == "Testing" && req.body.action == "Reject"){
+        status = "Development" ;
+        content = "Reject the issue from 'Testing'" ;
+    }
+    else if(req.body.status == "Done" && req.body.action == "Finish"){
+        status = "Closed" ;
+        content = "Close the issue" ;
+    }
+    else{
+        status = "Testing" ;
+        content = "Reject the issue from 'Done'" ;
+    }
+
+    var data_set = {
+        status : status
+    };
+
+    var queryStatement = 'UPDATE issue SET ? WHERE id=?;' ;
+
+    database.query(queryStatement, [data_set, req.body.issue_id], function(error, results) {
+
+        if (error) {
+            res.status(500).send({
+                status_messages: 'Internal error',
+                status_code: 500
+            });
+            console.log('Error: changeStatus :' + error);
+
+        }
+        else {
+            var history = {
+                issue_id : req.body.issue_id,
+                status : req.body.status,
+                content : content,
+                comment : req.body.comment,
+                user_id : req.body.user_id,
+                user_name : req.body.user_name,
+            }
+            addHistory(history);
+
+            res.status(200).send({
+                status_messages: 'updateIssue success.'
+            });
+        }
+    });
+}
+
+function addHistory(history){
+
+    var data_set = {
+        issue_id : history.issue_id,
+        user_id : history.user_id,
+        user_name : history.user_name,
+        content : history.content,
+        comment : history.comment,
+        status : history.status,
+        date : moment().format("YYYY-MM-DD"),
+    };
+
+    var queryStatement = 'INSERT INTO history SET ?';
+
+    database.query(queryStatement, data_set, function(error, results) {
+
+        if (error) {
+            console.log('Error: Add History :' + error);
+
+        } else{
+            console.log("Add History Success!");
+        }
+    });
+}
+
+function getHistory(req, res){
+
+    var queryStatement = 'SELECT *, DATE_FORMAT(date, "%Y-%m-%d") AS date From history WHERE issue_id=' + req.query.id;
+
+    database.query(queryStatement, function(error, results) {
+        if (error) {
+            res.status(500).send({
+                status_messages: 'Internal error',
+                status_code: 500
+            });
+            console.log('Error: getHistory :' + error);
+
+        } else if (results.length > 0 || results.length == 0) {
+
+            res.status(200).send({
+                status_messages: 'getHistory success.',
+                data : results
+            });
+        }
+        else {
+            res.status(404).send({
+                status_messages: 'getHistory Not found.',
+                status_code: 404
+            })
+        }
+    });
+}
+
 module.exports.getIssues = getIssues;
 module.exports.addIssue = addIssue;
 module.exports.updateIsuse = updateIsuse;
+module.exports.changeStatus = changeStatus;
+module.exports.getHistory = getHistory;

@@ -6,5 +6,7 @@ var issue = require('../modules/issue');
 router.get('/getIssues', issue.getIssues);
 router.post('/addIssue', issue.addIssue);
 router.post('/updateIssue', issue.updateIsuse);
+router.post('/changeStatus', issue.changeStatus);
+router.get('/getHistory', issue.getHistory);
 
 module.exports = router;

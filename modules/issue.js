@@ -1,12 +1,14 @@
 /* use database module */
 var database = require('./database');
 var url = require('url');
+var dateformat = require('dateformat');
 
 function getIssues(req, res){
     var tmp = url.parse(decodeURIComponent(req.url), true).search;
     if(tmp == null || tmp == ''){
         //var queryStatement = 'SELECT *, DATE_FORMAT(create_date, "%Y-%m-%d") AS createDate, DATE_FORMAT(due_date, "%Y-%m-%d") AS dueDate  FROM issue' ;
-        var queryStatement = 'SELECT id, project_id, priority, status, type, owner_id, developer_id, tester_id, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue' ;
+        //var queryStatement = 'SELECT id, title, project_id, priority, status, type, owner_id, developer_id, tester_id, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue' ;
+        var queryStatement = 'SELECT issue.id, project_name, issue.title, priority, status, type, a.name AS owner_name, b.name AS developer_name, c.name AS tester_name, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue, project, user AS a, user AS b, user AS c WHERE issue.project_id=project.id AND owner_id=a.id AND developer_id=b.id AND tester_id=c.id' ;
 
         database.query(queryStatement, function(error, results) {
 
@@ -33,14 +35,16 @@ function getIssues(req, res){
         });
     }
     else {
-        tmp = tmp.replace(/&/g, ' AND ');
-        getIssuesByData(req, res, 'Where ' + tmp.substr(1));
+        tmp = tmp.replace(/&/g, ' AND issue.');
+        getIssuesByData(req, res, 'Where issue.' + tmp.substr(1));
     }
 }
 
 function getIssuesByData(req, res, where){
     //var queryStatement = 'SELECT *, DATE_FORMAT(create_date, "%Y-%m-%d") AS createDate, DATE_FORMAT(due_date, "%Y-%m-%d") AS dueDate  FROM issue' ;
-    var queryStatement = 'SELECT id, project_name, priority, status, type, owner_id, developer_id, tester_id, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue ' + where ;
+    //var queryStatement = 'SELECT id, title, project_name, priority, status, type, owner_id, developer_id, tester_id, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue ' + where ;
+    var queryStatement = 'SELECT issue.id, project_name, issue.title, priority, status, type, a.name AS owner_name, b.name AS developer_name, c.name AS tester_name, DATE_FORMAT(create_date, "%Y-%m-%d") AS create_Date, DATE_FORMAT(due_date, "%Y-%m-%d") AS due_Date  FROM issue, project, user AS a, user AS b, user AS c ' + where + ' AND issue.project_id=project.id AND owner_id=a.id AND developer_id=b.id AND tester_id=c.id' ;
+
     database.query(queryStatement, function(error, results) {
 
         if (error) {
@@ -66,13 +70,13 @@ function getIssuesByData(req, res, where){
     });
 }
 
-var issue_field = ['title', 'priority', 'status', 'type', 'owner', 'project id', 'developer', 'tester', 'create date', 'due date'];
+var issue_field = ['title', 'priority', 'status', 'type', 'owner', 'project id', 'developer', 'tester', 'description', 'create date', 'due date'];
 
 function addIssue(req, res){
     var msg = 'Please enter a ';
     var index = 0;  //記欄位index
     var count = 0;  //計算缺了幾個
-
+    var now = new Date();
     var data_set = {
         title : req.body.title,
         priority : req.body.priority,
@@ -84,8 +88,8 @@ function addIssue(req, res){
         tester_id : req.body.tester_id,
         description : req.body.description,
         image : req.body.image,
-        create_date : req.body.create_date,
-        due_date : req.body.due_date
+        create_date : dateformat(now, 'isoDate'),
+        due_date : dateformat(req.body.due_date, 'isoDate')
     };
 
     // for(x in data_set){
@@ -126,7 +130,6 @@ function addIssue(req, res){
         }
     });
 }
-
 
 module.exports.getIssues = getIssues;
 module.exports.addIssue = addIssue;

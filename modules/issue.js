@@ -1,6 +1,7 @@
 /* use database module */
 var database = require('./database');
 var moment = require('moment');
+var nodemailer = require('nodemailer');
 var url = require('url');
 
 function getIssues(req, res){
@@ -146,6 +147,7 @@ function addIssue(req, res){
             console.log('Error: addIssue :' + error);
 
         } else{
+            var id_list = [];
             var history = {
                 issue_id : results.insertId,
                 status : "",
@@ -262,6 +264,18 @@ function changeStatus(req, res){
             }
             addHistory(history);
 
+            var mailData = {
+                title : req.body.title,
+                project_name : req.body.project_name,
+                user_name : req.body.user_name,
+                owner_id : req.body.owner_id,
+                developer_id : req.body.developer_id,
+                tester_id : req.body.tester_id,
+                content : content,
+                comment : req.body.comment
+            }
+            sendEmail(mailData);
+
             res.status(200).send({
                 status_messages: 'updateIssue success.'
             });
@@ -322,6 +336,64 @@ function getHistory(req, res){
     });
 }
 
+function sendEmail(data){
+
+    var smtpTransport = nodemailer.createTransport("SMTP",{
+        service: "Gmail",
+        auth: {
+            user: "wayne26582@gmail.com",
+            pass: "x0937386289"
+        }
+    });
+
+    var queryStatement = 'SELECT * From user';
+
+    database.query(queryStatement, function(error, results) {
+        if(error){
+            console.log('Error: getUsers :' + error);
+        }else{
+
+            var owner_name, developer_name, tester_name, owner_email, developer_email, tester_email;
+
+            for(var i = 0 ; i < results.length ; i++){
+                if(results[i].id == data.owner_id){
+                    owner_name = results[i].name ;
+                    owner_email = results[i].email;
+                }else if(results[i].id == data.developer_id){
+                    developer_name = results[i].name ;
+                    developer_email = results[i].email;
+                }else if(results[i].id == data.tester_id){
+                    tester_name = results[i].name ;
+                    tester_email = results[i].email;
+                }
+            }
+
+            var emailList = owner_email + ", " + developer_email + ", " + tester_email ;
+
+            var html = "<p><strong>Issue title : </strong>" + data.title + "</p>";
+            html += "<p><strong>Project : </strong>" + data.project_name + "</p>";
+            html += "<p><strong>Owner : </strong>" + owner_name + "</p>";
+            html += "<p><strong>Developer : </strong>" + developer_name + "</p>";
+            html += "<p><strong>Tester : </strong>" + tester_name + "</p>";
+            html += "<p><strong>Content : </strong>" + data.content + "</p>";
+            html += (data.comment)?("<p><strong>Comment : </strong>" + data.comment + "</p>"):("");
+
+            smtpTransport.sendMail({
+                from: '"ITS" <wayne26582@gmail.com>',
+                to: emailList,
+                subject: "系統訊息",
+                text: "text",
+                html : html
+            }, function(error, response){
+               if(error)
+                   console.log(error);
+               else
+                   console.log("Message sent: " + response.message);
+            })
+            smtpTransport.close();
+        }
+    });
+}
 module.exports.getIssues = getIssues;
 module.exports.addIssue = addIssue;
 module.exports.updateIsuse = updateIsuse;

@@ -83,7 +83,7 @@ function getUsers(req, res){
 }
 
 function addUser(req, res){
-    console.log(req.body.project[0].value);
+
     var user_field = ['name', 'title', 'phone', 'project', 'email', 'password'];
     var msg = 'Please enter a ';
     var index = 0;  //記欄位index

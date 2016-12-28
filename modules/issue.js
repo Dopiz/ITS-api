@@ -151,7 +151,7 @@ function addIssue(req, res){
             var history = {
                 issue_id : results.insertId,
                 status : "",
-                content : "Edit an issue",
+                content : "Create an issue",
                 comment : "",
                 user_id : req.body.owner_id,
                 user_name : req.body.owner_name,
@@ -271,6 +271,7 @@ function changeStatus(req, res){
                 owner_id : req.body.owner_id,
                 developer_id : req.body.developer_id,
                 tester_id : req.body.tester_id,
+                priority : req.body.priority,
                 content : content,
                 comment : req.body.comment
             }
@@ -372,6 +373,7 @@ function sendEmail(data){
 
             var html = "<p><strong>Issue title : </strong>" + data.title + "</p>";
             html += "<p><strong>Project : </strong>" + data.project_name + "</p>";
+            html += "<p><strong>Priority : </strong>" + data.priority + "</p>";
             html += "<p><strong>Owner : </strong>" + owner_name + "</p>";
             html += "<p><strong>Developer : </strong>" + developer_name + "</p>";
             html += "<p><strong>Tester : </strong>" + tester_name + "</p>";

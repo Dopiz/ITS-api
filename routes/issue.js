@@ -8,5 +8,6 @@ router.post('/addIssue', issue.addIssue);
 router.post('/updateIssue', issue.updateIsuse);
 router.post('/changeStatus', issue.changeStatus);
 router.get('/getHistory', issue.getHistory);
+router.get('/getReport', issue.getReport);
 
 module.exports = router;

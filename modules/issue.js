@@ -435,7 +435,7 @@ function getReport(req, res){
 
 function setReport(data){
 
-    var total_time;
+    var total_time = 0;
     var new_time = 0 ;
     var development_time = 0;
     var development_finish = 0 ;
@@ -445,19 +445,19 @@ function setReport(data){
     var done_time = 0;
     var done_finish = 0 ;
     var done_reject = 0 ;
-    var oneDay = 60*60*24*1000;
+    const ONE_DAY = 60*60*24*1000;
     var current_time = data[0].date;
     /* set total time*/
     var startDate = new Date(data[0].date) ;
     var endDate = new Date(data[data.length-1].date) ;
-    total_time = (endDate - startDate)/oneDay ;
+    total_time = (endDate - startDate)/ONE_DAY + 1;
 
     var new_count = 0 ;
     var dev_count = 0 ;
     var testing_count = 0 ;
     var done_count = 0 ;
 
-    data.forEach(function(item){
+    data.forEach(function(item, index){
 
         switch(item.status){
             case 'Development' :
@@ -479,8 +479,32 @@ function setReport(data){
 
         if(item.action == "Create" || item.action == "Edit"){
 
-        }
-        else if(current_time == item.date){
+        }else if(index == data.length -1){
+
+            switch(item.status){
+                case 'New' :
+                    new_count++;
+                break;
+                case 'Development' :
+                    dev_count++;
+                break;
+                case 'Testing' :
+                    testing_count++;
+                break;
+                case 'Done' :
+                    done_count++;
+                break;
+            };
+
+            var intervalTime = (current_time == item.date) ? (1) : ((new Date(item.date) - new Date(current_time))/ONE_DAY);
+            var part = intervalTime/(new_count + dev_count + testing_count + done_count);
+
+            new_time += part * new_count ;
+            development_time += part * dev_count;
+            testing_time += part * testing_count;
+            done_time += part * done_count;
+
+        }else if(current_time == item.date){
             /*計算比例*/
             switch(item.status){
                 case 'New' :
@@ -497,18 +521,11 @@ function setReport(data){
                 break;
             };
 
-        }else if(item.status == "Done" && item.action == "Finish"){
+        }else if(current_time != item.date){
 
-            done_count++;
+            var intervalTime = (new Date(item.date) - new Date(current_time))/ONE_DAY;
 
-            var part = 1/(new_count + dev_count + testing_count + done_count);
-            new_time += part * new_count ;
-            development_time += part * dev_count;
-            testing_time += part * testing_count;
-            done_time += part * done_count;
-
-        }else{
-            var part = 1/(new_count + dev_count + testing_count + done_count);
+            var part = intervalTime/(new_count + dev_count + testing_count + done_count);
             new_time += part * new_count ;
             development_time += part * dev_count;
             testing_time += part * testing_count;
@@ -540,9 +557,11 @@ function setReport(data){
 
     var pieChartData = [] ;
     var item ;
+    var rate = (total_time == 1) ? (1) : (total_time/(total_time-1)) ;
+
     if(new_time){
         item = {
-            value : Math.round((new_time/total_time)*1000)/10,
+            value : Math.round((new_time/total_time)*1000*rate)/10,
             label : "New"
         }
         pieChartData.push(item);
@@ -550,7 +569,7 @@ function setReport(data){
 
     if(development_time){
         item = {
-            value : Math.round((development_time/total_time)*1000)/10,
+            value : Math.round((development_time/total_time)*1000*rate)/10,
             label : "Development"
         }
         pieChartData.push(item);
@@ -558,7 +577,7 @@ function setReport(data){
 
     if(testing_time){
         item = {
-            value : Math.round((testing_time/total_time)*1000)/10,
+            value : Math.round((testing_time/total_time)*1000*rate)/10,
             label : "Testing"
         }
         pieChartData.push(item);
@@ -566,7 +585,7 @@ function setReport(data){
 
     if(done_time){
         item = {
-            value : Math.round((done_time/total_time)*1000)/10,
+            value : Math.round((done_time/total_time)*1000*rate)/10,
             label : "Done"
         }
         pieChartData.push(item);
@@ -575,13 +594,13 @@ function setReport(data){
     var result = {
         pieChartData : pieChartData,
         total_time : total_time,
-        new_time : Math.round(new_time*10)/10,
-        development_time : Math.round(development_time*10)/10,
+        new_time : (new_time) ? (Math.round(new_time*10*rate)/10) : (0),
+        development_time : (development_time) ? (Math.round(development_time*10*rate)/10) : (0),
         development_finish : development_finish,
-        testing_time : Math.round(testing_time*10)/10,
+        testing_time : (testing_time) ? (Math.round(testing_time*10*rate)/10) : (0),
         testing_finish : testing_finish,
         testing_reject : testing_reject,
-        done_time : Math.round(done_time*10)/10,
+        done_time : (done_time) ? (Math.round(done_time*10*rate)/10) : (0),
         done_finish : done_finish,
         done_reject : done_reject
     }

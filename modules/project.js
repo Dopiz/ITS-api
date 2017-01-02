@@ -14,7 +14,7 @@ function getProjects(req, res){
                 });
                 console.log('Error: getProjects :' + error);
 
-            } else if (results.length > 0) {
+            } else if (results.length > 0 || results.length == 0) {
 
                 res.status(200).send({
                     status_messages: 'getProjects success.',
@@ -46,7 +46,14 @@ function getProjectsById(req, res, id){
             });
             console.log('Error: getUserProjects :' + error);
 
-        } else if (results.length > 0) {
+        }
+        else if(results.length == 0){
+            res.status(200).send({
+                status_messages: 'getUserProject success.',
+                status_code: []
+            });
+        }
+        else if (results.length > 0) {
             /*res.status(200).send({
                 status_messages: '**',
                 status_code: 200,
@@ -82,7 +89,7 @@ function getUserProjectData(req, res, project_str){
             });
             console.log('Error: getUserProjectData :' + error);
 
-        } else if (results.length > 0) {
+        } else if (results.length > 0 || results.length == 0) {
             res.status(200).send({
                 status_messages: 'getUserProject success.',
                 status_code: results

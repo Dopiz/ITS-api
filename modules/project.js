@@ -54,50 +54,18 @@ function getProjectsById(req, res, id){
             });
         }
         else if (results.length > 0) {
-            /*res.status(200).send({
-                status_messages: '**',
+            results[0].project = results[0].project.replace(/\"value\"/g, '"id"');
+            results[0].project = results[0].project.replace(/\"label\"/g, '"project_name"');
+            var jsonObj = JSON.parse(results[0].project);
+            res.status(200).send({
+                status_messages: "getUserProject success.",
                 status_code: 200,
-                data : results
-            });*/
-            getUserProjectData(req, res, results[0].project);
+                data : jsonObj
+            });
         }
         else {
             res.status(404).send({
                 status_messages: 'getUserProjects Not found.',
-                status_code: 404
-            })
-        }
-    });
-}
-
-function getUserProjectData(req, res, project_str){
-
-    var project = project_str.split(" ");
-    var queryStatement = 'Select id, project_name From project WHERE ' ;
-    for (var i = project.length - 2; i >= 0; i--) {
-        queryStatement += 'id=' + project[i];
-        if(i!=0)
-            queryStatement+=' OR '
-    }
-
-    database.query(queryStatement, function(error, results) {
-
-        if (error) {
-            res.status(500).send({
-                status_messages: 'Internal error',
-                status_code: 500
-            });
-            console.log('Error: getUserProjectData :' + error);
-
-        } else if (results.length > 0 || results.length == 0) {
-            res.status(200).send({
-                status_messages: 'getUserProject success.',
-                status_code: results
-            })
-        }
-        else {
-            res.status(404).send({
-                status_messages: 'getUserProjectData Not found.',
                 status_code: 404
             })
         }

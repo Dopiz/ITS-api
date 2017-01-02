@@ -80,7 +80,7 @@ function setUserName(res, data){
             });
             console.log('Error: setUserName :' + error);
 
-        } else if (results.length > 0) {
+        } else if (results.length > 0 || results.length == 0) {
 
             for(var i = 0 ; i < data.length ; i++){
                 for(var j = 0 ; j < results.length ; j++){
